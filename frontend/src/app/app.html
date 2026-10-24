@@ -1,0 +1,59 @@
+<main class="shell">
+  <header>
+    <h1>Bank Account Fraud Detection Dashboard</h1>
+    <p>Teaching prototype • Random Forest / Logistic Regression models trained on the BAF dataset</p>
+  </header>
+
+  @if (deployedStatic) {
+    <aside class="notice">Static GitHub Pages demonstration only.
+      Predictions require Flask and Angular running locally.</aside>
+  }
+
+  <form (ngSubmit)="submit()">
+    <h2>Model input features ({{ fields.length }})</h2>
+    <label class="model-pick">Model
+      <select name="model" [(ngModel)]="selectedModel">
+        @for (m of models; track m.id) { <option [ngValue]="m.id">{{ m.label }}</option> }
+      </select>
+    </label>
+    <div class="actions">
+      <button type="button" class="secondary" (click)="loadSample('legit')">Load legitimate sample</button>
+      <button type="button" class="secondary" (click)="loadSample('fraud')">Load fraud sample</button>
+      <button type="button" class="secondary" (click)="clearForm()">Clear</button>
+    </div>
+    <div class="grid">
+      @for (field of fields; track field.name) {
+        <label>{{ field.label }}
+          @if (field.kind === 'number') {
+            <input type="number" step="any" [name]="field.name"
+              [min]="field.min ?? null" [max]="field.max ?? null"
+              [(ngModel)]="values[field.name]" [required]="field.required" />
+          } @else {
+            <select [name]="field.name" [(ngModel)]="values[field.name]"
+              [required]="field.required">
+              <option [ngValue]="null">Select a value</option>
+              @for (option of field.options ?? []; track option) {
+                <option [ngValue]="option">{{ option }}</option>
+              }
+            </select>
+          }
+        </label>
+      }
+    </div>
+    <button type="submit" [disabled]="loading() || deployedStatic">
+      {{ loading() ? 'Predicting…' : 'Run local prediction' }}
+    </button>
+  </form>
+
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+  @if (result(); as r) {
+    <section class="result" [class.fraud]="r.prediction === 'Fraud'">
+      <h2>Prediction result</h2>
+      <p class="verdict"><strong>{{ r.prediction }}</strong> <small>({{ r.model }})</small></p>
+      <p>Fraud probability: {{ percent(r.fraud_probability) }}
+        (flag threshold {{ percent(r.threshold) }}, tuned for ≈5% false-positive rate)</p>
+      <p>{{ r.disclaimer }}</p>
+    </section>
+  }
+</main>

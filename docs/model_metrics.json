@@ -1,0 +1,14 @@
+{
+  "random_forest": {
+    "recall_at_5pct_fpr": 0.4683808200138985,
+    "fpr": 0.05000173153319844,
+    "roc_auc": 0.8704137073730622,
+    "predictive_equality_age": 0.3782644904143294
+  },
+  "logistic_regression": {
+    "recall_at_5pct_fpr": 0.4621264767199444,
+    "fpr": 0.05000173153319844,
+    "roc_auc": 0.864586050439196,
+    "predictive_equality_age": 0.3970802385032509
+  }
+}

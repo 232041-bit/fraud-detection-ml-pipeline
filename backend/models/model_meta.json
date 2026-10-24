@@ -1,0 +1,197 @@
+{
+  "features": [
+    "income",
+    "name_email_similarity",
+    "prev_address_months_count",
+    "current_address_months_count",
+    "customer_age",
+    "days_since_request",
+    "intended_balcon_amount",
+    "payment_type",
+    "zip_count_4w",
+    "velocity_6h",
+    "velocity_24h",
+    "velocity_4w",
+    "bank_branch_count_8w",
+    "date_of_birth_distinct_emails_4w",
+    "employment_status",
+    "credit_risk_score",
+    "email_is_free",
+    "housing_status",
+    "phone_home_valid",
+    "phone_mobile_valid",
+    "bank_months_count",
+    "has_other_cards",
+    "proposed_credit_limit",
+    "foreign_request",
+    "source",
+    "session_length_in_minutes",
+    "device_os",
+    "keep_alive_session",
+    "device_distinct_emails_8w",
+    "device_fraud_count",
+    "month"
+  ],
+  "categories": {
+    "payment_type": [
+      "AA",
+      "AB",
+      "AC",
+      "AD",
+      "AE"
+    ],
+    "employment_status": [
+      "CA",
+      "CB",
+      "CC",
+      "CD",
+      "CE",
+      "CF",
+      "CG"
+    ],
+    "housing_status": [
+      "BA",
+      "BB",
+      "BC",
+      "BD",
+      "BE",
+      "BF",
+      "BG"
+    ],
+    "source": [
+      "INTERNET",
+      "TELEAPP"
+    ],
+    "device_os": [
+      "linux",
+      "macintosh",
+      "other",
+      "windows",
+      "x11"
+    ]
+  },
+  "ranges": {
+    "income": [
+      0.1,
+      0.9
+    ],
+    "name_email_similarity": [
+      1.43e-06,
+      0.999999318
+    ],
+    "prev_address_months_count": [
+      -1.0,
+      383.0
+    ],
+    "current_address_months_count": [
+      -1.0,
+      428.0
+    ],
+    "customer_age": [
+      10.0,
+      90.0
+    ],
+    "days_since_request": [
+      4.04e-09,
+      78.45690384
+    ],
+    "intended_balcon_amount": [
+      -15.53055484,
+      112.9569277
+    ],
+    "zip_count_4w": [
+      1.0,
+      6700.0
+    ],
+    "velocity_6h": [
+      -170.6030724,
+      16715.5654
+    ],
+    "velocity_24h": [
+      1300.307314,
+      9506.896596
+    ],
+    "velocity_4w": [
+      2825.748405,
+      6994.764201
+    ],
+    "bank_branch_count_8w": [
+      0.0,
+      2385.0
+    ],
+    "date_of_birth_distinct_emails_4w": [
+      0.0,
+      39.0
+    ],
+    "credit_risk_score": [
+      -170.0,
+      389.0
+    ],
+    "email_is_free": [
+      0.0,
+      1.0
+    ],
+    "phone_home_valid": [
+      0.0,
+      1.0
+    ],
+    "phone_mobile_valid": [
+      0.0,
+      1.0
+    ],
+    "bank_months_count": [
+      -1.0,
+      32.0
+    ],
+    "has_other_cards": [
+      0.0,
+      1.0
+    ],
+    "proposed_credit_limit": [
+      190.0,
+      2100.0
+    ],
+    "foreign_request": [
+      0.0,
+      1.0
+    ],
+    "session_length_in_minutes": [
+      -1.0,
+      85.89914319
+    ],
+    "keep_alive_session": [
+      0.0,
+      1.0
+    ],
+    "device_distinct_emails_8w": [
+      -1.0,
+      2.0
+    ],
+    "device_fraud_count": [
+      0.0,
+      0.0
+    ],
+    "month": [
+      0.0,
+      7.0
+    ]
+  },
+  "thresholds": {
+    "random_forest": 0.30622572153472266,
+    "logistic_regression": 0.9990806339673022
+  },
+  "metrics": {
+    "random_forest": {
+      "recall_at_5pct_fpr": 0.4683808200138985,
+      "fpr": 0.05000173153319844,
+      "roc_auc": 0.8704137073730622,
+      "predictive_equality_age": 0.3782644904143294
+    },
+    "logistic_regression": {
+      "recall_at_5pct_fpr": 0.4621264767199444,
+      "fpr": 0.05000173153319844,
+      "roc_auc": 0.864586050439196,
+      "predictive_equality_age": 0.3970802385032509
+    }
+  }
+}

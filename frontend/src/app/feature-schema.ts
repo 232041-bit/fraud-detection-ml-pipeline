@@ -1,0 +1,112 @@
+export type Feature = {
+  name: string;
+  label: string;
+  kind: 'number' | 'category';
+  required: boolean;
+  options?: string[];
+  min?: number;
+  max?: number;
+};
+
+// Generated from backend/models/model_meta.json: the 31 raw inputs of your pipelines, in exact training order.
+export const FEATURES: Feature[] = [
+  { name: 'income', label: 'Income', kind: 'number', required: true, min: 0.1, max: 0.9 },
+  { name: 'name_email_similarity', label: 'Name email similarity', kind: 'number', required: true, min: 1.43e-06, max: 0.999999 },
+  { name: 'prev_address_months_count', label: 'Prev address months count', kind: 'number', required: true, min: -1, max: 383 },
+  { name: 'current_address_months_count', label: 'Current address months count', kind: 'number', required: true, min: -1, max: 428 },
+  { name: 'customer_age', label: 'Customer age', kind: 'number', required: true, min: 10, max: 90 },
+  { name: 'days_since_request', label: 'Days since request', kind: 'number', required: true, min: 4.04e-09, max: 78.4569 },
+  { name: 'intended_balcon_amount', label: 'Intended balcon amount', kind: 'number', required: true, min: -15.5306, max: 112.957 },
+  { name: 'payment_type', label: 'Payment type', kind: 'category', required: true, options: ['AA', 'AB', 'AC', 'AD', 'AE'] },
+  { name: 'zip_count_4w', label: 'Zip count 4w', kind: 'number', required: true, min: 1, max: 6700 },
+  { name: 'velocity_6h', label: 'Velocity 6h', kind: 'number', required: true, min: -170.603, max: 16715.6 },
+  { name: 'velocity_24h', label: 'Velocity 24h', kind: 'number', required: true, min: 1300.31, max: 9506.9 },
+  { name: 'velocity_4w', label: 'Velocity 4w', kind: 'number', required: true, min: 2825.75, max: 6994.76 },
+  { name: 'bank_branch_count_8w', label: 'Bank branch count 8w', kind: 'number', required: true, min: 0, max: 2385 },
+  { name: 'date_of_birth_distinct_emails_4w', label: 'Date of birth distinct emails 4w', kind: 'number', required: true, min: 0, max: 39 },
+  { name: 'employment_status', label: 'Employment status', kind: 'category', required: true, options: ['CA', 'CB', 'CC', 'CD', 'CE', 'CF', 'CG'] },
+  { name: 'credit_risk_score', label: 'Credit risk score', kind: 'number', required: true, min: -170, max: 389 },
+  { name: 'email_is_free', label: 'Email is free', kind: 'number', required: true, min: 0, max: 1 },
+  { name: 'housing_status', label: 'Housing status', kind: 'category', required: true, options: ['BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG'] },
+  { name: 'phone_home_valid', label: 'Phone home valid', kind: 'number', required: true, min: 0, max: 1 },
+  { name: 'phone_mobile_valid', label: 'Phone mobile valid', kind: 'number', required: true, min: 0, max: 1 },
+  { name: 'bank_months_count', label: 'Bank months count', kind: 'number', required: true, min: -1, max: 32 },
+  { name: 'has_other_cards', label: 'Has other cards', kind: 'number', required: true, min: 0, max: 1 },
+  { name: 'proposed_credit_limit', label: 'Proposed credit limit', kind: 'number', required: true, min: 190, max: 2100 },
+  { name: 'foreign_request', label: 'Foreign request', kind: 'number', required: true, min: 0, max: 1 },
+  { name: 'source', label: 'Source', kind: 'category', required: true, options: ['INTERNET', 'TELEAPP'] },
+  { name: 'session_length_in_minutes', label: 'Session length in minutes', kind: 'number', required: true, min: -1, max: 85.8991 },
+  { name: 'device_os', label: 'Device os', kind: 'category', required: true, options: ['linux', 'macintosh', 'other', 'windows', 'x11'] },
+  { name: 'keep_alive_session', label: 'Keep alive session', kind: 'number', required: true, min: 0, max: 1 },
+  { name: 'device_distinct_emails_8w', label: 'Device distinct emails 8w', kind: 'number', required: true, min: -1, max: 2 },
+  { name: 'device_fraud_count', label: 'Device fraud count', kind: 'number', required: true, min: 0, max: 0 },
+  { name: 'month', label: 'Month (0-7)', kind: 'number', required: true, min: 0, max: 7 },
+];
+
+export const SAMPLE_LEGIT: Record<string, string | number> = {
+  "income": 0.9,
+  "name_email_similarity": 0.536292405,
+  "prev_address_months_count": -1,
+  "current_address_months_count": 129,
+  "customer_age": 50,
+  "days_since_request": 0.01329659,
+  "intended_balcon_amount": 36.47290539,
+  "payment_type": "AA",
+  "zip_count_4w": 1360,
+  "velocity_6h": 3584.044957,
+  "velocity_24h": 2110.445975,
+  "velocity_4w": 3536.218324,
+  "bank_branch_count_8w": 9,
+  "date_of_birth_distinct_emails_4w": 5,
+  "employment_status": "CA",
+  "credit_risk_score": 250,
+  "email_is_free": 0,
+  "housing_status": "BC",
+  "phone_home_valid": 1,
+  "phone_mobile_valid": 1,
+  "bank_months_count": 31,
+  "has_other_cards": 1,
+  "proposed_credit_limit": 500,
+  "foreign_request": 0,
+  "source": "INTERNET",
+  "session_length_in_minutes": 1.842078871,
+  "device_os": "other",
+  "keep_alive_session": 0,
+  "device_distinct_emails_8w": 1,
+  "device_fraud_count": 0,
+  "month": 6
+};
+
+export const SAMPLE_FRAUD: Record<string, string | number> = {
+  "income": 0.9,
+  "name_email_similarity": 0.140347659,
+  "prev_address_months_count": -1,
+  "current_address_months_count": 283,
+  "customer_age": 50,
+  "days_since_request": 0.003107397,
+  "intended_balcon_amount": -0.530263674,
+  "payment_type": "AC",
+  "zip_count_4w": 1438,
+  "velocity_6h": 5456.979224,
+  "velocity_24h": 4360.924677,
+  "velocity_4w": 4286.220246,
+  "bank_branch_count_8w": 1,
+  "date_of_birth_distinct_emails_4w": 2,
+  "employment_status": "CC",
+  "credit_risk_score": 272,
+  "email_is_free": 0,
+  "housing_status": "BA",
+  "phone_home_valid": 0,
+  "phone_mobile_valid": 1,
+  "bank_months_count": -1,
+  "has_other_cards": 0,
+  "proposed_credit_limit": 500,
+  "foreign_request": 0,
+  "source": "INTERNET",
+  "session_length_in_minutes": 2.265557853,
+  "device_os": "windows",
+  "keep_alive_session": 0,
+  "device_distinct_emails_8w": 1,
+  "device_fraud_count": 0,
+  "month": 6
+};

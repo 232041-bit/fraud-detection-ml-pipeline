@@ -1,3 +1,23 @@
+# Python and local environments
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.env
+.env.*
+!.env.example
+
+# Angular dependencies and build outputs
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Large raw dataset (163 MB > GitHub 100 MB limit). Small sample CSVs ARE tracked.
+data/FraudDetection_Dataset.csv
+
+# Local logs
+*.log

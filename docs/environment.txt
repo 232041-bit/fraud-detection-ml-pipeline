@@ -1,1 +1,4 @@
-Paste output of:  git --version ; node --version ; npm --version ; py -3.12 --version
+git version 2.55.0.windows.5
+v24.22.1
+11.19.1
+Python 3.12.9

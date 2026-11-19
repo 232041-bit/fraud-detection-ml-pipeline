@@ -1,62 +1,361 @@
 ﻿<main class="shell">
   <header>
     <h1>Bank Account Fraud Detection Dashboard</h1>
-    <p>Teaching prototype • Random Forest / Logistic Regression models trained on the BAF dataset</p>
+    <p>Teaching prototype on the BAF dataset •
+      <strong>Novelty 1:</strong> drift-aware 5%-FPR threshold •
+      <strong>Novelty 2:</strong> uncertainty-aware three-way decisions</p>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" [class.active]="tab() === 'predict'" (click)="tab.set('predict')">Predict</button>
+      <button type="button" role="tab" [class.active]="tab() === 'drift'" (click)="tab.set('drift')">Drift monitor</button>
+      <button type="button" role="tab" [class.active]="tab() === 'research'" (click)="tab.set('research')">Research results</button>
+    </nav>
   </header>
 
   @if (deployedStatic) {
-    <aside class="notice">Static GitHub Pages demonstration only.
-      Predictions require Flask and Angular running locally.</aside>
+    <aside class="notice">Static GitHub Pages demonstration. Live predictions and the drift monitor
+      need Flask + Angular running locally; the <em>Research results</em> tab works here.</aside>
   }
 
-  <form (ngSubmit)="submit()">
-    <h2>Model input features ({{ fields.length }})</h2>
-    <label class="model-pick">Model
-      <select name="model" [(ngModel)]="selectedModel">
-        @for (m of models; track m.id) { <option [ngValue]="m.id">{{ m.label }}</option> }
-      </select>
-    </label>
-    <div class="actions">
-      <button type="button" class="secondary" (click)="loadSample('legit')">Load legitimate sample</button>
-      <button type="button" class="secondary" (click)="loadSample('fraud')">Load fraud sample</button>
-      <button type="button" class="secondary" (click)="clearForm()">Clear</button>
-    </div>
-    <div class="grid">
-      @for (field of fields; track field.name) {
-        <label>{{ field.label }}
-          @if (field.kind === 'number') {
-            <input type="number" step="any" [name]="field.name"
-              [min]="field.min ?? null" [max]="field.max ?? null"
-              [(ngModel)]="values[field.name]" [required]="field.required" />
-          } @else {
-            <select [name]="field.name" [(ngModel)]="values[field.name]"
-              [required]="field.required">
-              <option [ngValue]="null">Select a value</option>
-              @for (option of field.options ?? []; track option) {
-                <option [ngValue]="option">{{ option }}</option>
-              }
-            </select>
-          }
+  <!-- ============================================================ PREDICT -->
+  @if (tab() === 'predict') {
+    <form (ngSubmit)="submit()">
+      <div class="row">
+        <label class="model-pick">Model
+          <select name="model" [(ngModel)]="selectedModel">
+            @for (m of models; track m.id) { <option [ngValue]="m.id">{{ m.label }}</option> }
+          </select>
         </label>
+        <label class="check"><input type="checkbox" name="fair" [(ngModel)]="fairMode" />
+          Fairness-aware threshold (per age group)</label>
+      </div>
+      <div class="actions">
+        <button type="button" class="secondary" (click)="loadSample('legit')">Legitimate sample</button>
+        <button type="button" class="secondary" (click)="loadSample('review')">Uncertain sample</button>
+        <button type="button" class="secondary" (click)="loadSample('fraud')">Fraud sample</button>
+        <button type="button" class="secondary" (click)="clearForm()">Clear</button>
+      </div>
+      <details open>
+        <summary>Model input features ({{ fields.length }})</summary>
+        <div class="grid">
+          @for (field of fields; track field.name) {
+            <label>{{ field.label }}
+              @if (field.kind === 'number') {
+                <input type="number" step="any" [name]="field.name"
+                  [min]="field.min ?? null" [max]="field.max ?? null"
+                  [(ngModel)]="values[field.name]" [required]="field.required" />
+              } @else {
+                <select [name]="field.name" [(ngModel)]="values[field.name]" [required]="field.required">
+                  <option [ngValue]="null">Select a value</option>
+                  @for (option of field.options ?? []; track option) {
+                    <option [ngValue]="option">{{ option }}</option>
+                  }
+                </select>
+              }
+            </label>
+          }
+        </div>
+      </details>
+      <button type="submit" [disabled]="loading() || deployedStatic">
+        {{ loading() ? 'Predicting…' : 'Run local prediction' }}
+      </button>
+    </form>
+
+    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+    @if (result(); as r) {
+      <section class="result decision-{{ r.decision }}">
+        <div class="verdict-row">
+          <span class="badge decision-{{ r.decision }}">{{ decisionText(r.decision) }}</span>
+          <small>{{ modelLabels[r.model ?? ''] }} • binary label: {{ r.prediction }}</small>
+        </div>
+
+        <div class="riskbar" aria-label="fraud probability scale">
+          @if (r.uncertainty; as u) {
+            <div class="zone" [style.left.%]="pos(u.grey_zone[0])"
+                 [style.width.%]="pos(u.grey_zone[1]) - pos(u.grey_zone[0])"></div>
+          }
+          <div class="thr" [style.left.%]="pos(r.threshold)"></div>
+          <div class="marker" [style.left.%]="pos(r.fraud_probability)"></div>
+        </div>
+        <p class="legend"><span class="sw zone-sw"></span> grey zone → manual review
+          <span class="sw thr-sw"></span> fraud threshold
+          <span class="sw marker-sw"></span> this application</p>
+
+        <div class="cards">
+          <div class="card">
+            <h3>Risk</h3>
+            <p class="big">{{ percent(r.fraud_probability) }}</p>
+            <p>fraud probability (mean over {{ r.uncertainty?.members }} member{{ r.uncertainty?.members === 1 ? '' : 's' }})</p>
+          </div>
+          @if (r.uncertainty; as u) {
+            <div class="card">
+              <h3>Uncertainty <small>(Novelty 2)</small></h3>
+              <table class="kv">
+                <tr><td>Method</td><td>{{ u.method }}</td></tr>
+                <tr><td>Predictive entropy</td><td>{{ u.predictive_entropy | number: '1.3-3' }} bits</td></tr>
+                <tr><td>Aleatoric (expected entropy)</td><td>{{ u.aleatoric_entropy | number: '1.3-3' }}</td></tr>
+                <tr><td>Epistemic (mutual information)</td>
+                  <td [class.warn]="u.epistemic_limit !== null && u.mutual_information > u.epistemic_limit">
+                    {{ u.mutual_information | number: '1.3-3' }}
+                    @if (u.epistemic_limit !== null) { <small>/ limit {{ u.epistemic_limit | number: '1.3-3' }}</small> }
+                  </td></tr>
+                <tr><td>Member std. dev.</td><td>{{ u.std | number: '1.3-3' }}</td></tr>
+              </table>
+            </div>
+          }
+          @if (r.drift; as d) {
+            <div class="card">
+              <h3>Threshold <small>(Novelty 1)</small></h3>
+              <table class="kv">
+                <tr><td>Adaptive threshold used</td><td><strong>{{ percent(d.adaptive_threshold) }}</strong></td></tr>
+                <tr><td>Calibrated (month 6)</td><td>{{ percent(d.calibrated_threshold) }}</td></tr>
+                <tr><td>Drift recalibrations</td><td>{{ d.recalibrations }}</td></tr>
+                <tr><td>Fair mode / age group</td><td>{{ d.fair_mode ? 'on' : 'off' }} / {{ d.age_group }}</td></tr>
+              </table>
+            </div>
+          }
+        </div>
+        @if (r.decision_reasons?.length) {
+          <p class="reasons">Referred because: {{ r.decision_reasons?.join('; ') }}.</p>
+        }
+        <p class="muted">{{ r.disclaimer }}</p>
+      </section>
+    }
+  }
+
+  <!-- ============================================================ DRIFT -->
+  @if (tab() === 'drift') {
+    <section class="panel">
+      <h2>Drift-aware fraud detection module <small>(Novelty 1)</small></h2>
+      <p class="muted">Each click streams a labelled micro-batch of 1,500 real BAF applications from
+        the chosen month. The monitor computes PSI and KS tests on every feature and on the model
+        score. If drift is detected (or the realised FPR leaves 5% ± 1 pp), the decision threshold is
+        recalibrated; fair mode recalibrates one threshold per age group.</p>
+      <div class="row">
+        <label>Model
+          <select name="dmodel" [(ngModel)]="driftModel" (ngModelChange)="onDriftModelChange()">
+            @for (m of models; track m.id) { <option [ngValue]="m.id">{{ modelLabels[m.id] }}</option> }
+          </select>
+        </label>
+        <label>Month to stream
+          <select name="dmonth" [(ngModel)]="driftMonth">
+            @for (m of range(8); track m) { <option [ngValue]="m">Month {{ m }}</option> }
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" name="dlab" [(ngModel)]="driftLabels" /> delayed labels arrive</label>
+        <label class="check"><input type="checkbox" name="dfair" [(ngModel)]="driftFair" /> fairness-aware</label>
+      </div>
+      <div class="actions">
+        <button type="button" (click)="sendDriftBatch()" [disabled]="driftBusy() || deployedStatic">
+          {{ driftBusy() ? 'Scoring batch…' : 'Stream batch' }}</button>
+        <button type="button" class="secondary" (click)="resetDrift()" [disabled]="deployedStatic">Reset to calibrated threshold</button>
+      </div>
+      @if (driftError()) { <p class="error" role="alert">{{ driftError() }}</p> }
+
+      @if (driftPolicy(); as p) {
+        <div class="cards">
+          <div class="card"><h3>Current threshold</h3><p class="big">{{ percent(p.threshold) }}</p>
+            <p>calibrated {{ percent(p.base_threshold) }}</p></div>
+          <div class="card"><h3>Age-group thresholds</h3>
+            <p>&lt;50: {{ percent(p.group_thresholds['0']) }}<br>≥50: {{ percent(p.group_thresholds['1']) }}</p>
+            <p class="muted">{{ p.fair ? 'used (fair mode)' : 'not used' }}</p></div>
+          <div class="card"><h3>Recalibrations</h3><p class="big">{{ p.recalibrations }}</p></div>
+        </div>
       }
-    </div>
-    <button type="submit" [disabled]="loading() || deployedStatic">
-      {{ loading() ? 'Predicting…' : 'Run local prediction' }}
-    </button>
-  </form>
 
-  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+      @if (driftLast(); as d) {
+        <div class="report" [class.alert]="d.report.drift_detected">
+          <h3>Batch {{ d.update.batch }} (month {{ d.update.month }}):
+            {{ d.report.drift_detected ? 'DRIFT DETECTED' : 'no significant drift' }}
+            <small>severity {{ d.report.severity }}, max PSI {{ d.report.max_psi | number: '1.3-3' }}</small></h3>
+          <p>Score PSI {{ d.report.score?.psi | number: '1.3-3' }} • KS D = {{ d.report.score?.ks_stat | number: '1.3-3' }}
+            • {{ d.update.recalibrated ? 'threshold recalibrated: ' + percent(d.update.threshold_before) + ' → ' + percent(d.update.threshold_after) + ' (' + d.update.reason + ')' : 'threshold kept' }}</p>
+          @if (d.update.performance_before; as pb) {
+            <p>FPR on this batch: {{ percent(pb.fpr) }} before → {{ percent(d.update.performance_after?.fpr) }} after
+              (target 5%) • recall {{ percent(pb.recall) }} → {{ percent(d.update.performance_after?.recall) }}</p>
+          }
+          <p>Three-way decisions: {{ d.update.decisions.APPROVE }} approve •
+            {{ d.update.decisions.MANUAL_REVIEW }} review • {{ d.update.decisions.FLAG_FRAUD }} flagged</p>
+          <table class="data">
+            <thead><tr><th>Feature</th><th>PSI</th><th></th><th>KS D</th><th>KS p</th><th>Severity</th></tr></thead>
+            <tbody>
+              @for (f of d.report.top_features; track f.feature) {
+                <tr><td>{{ f.feature }}</td><td>{{ f.psi | number: '1.3-3' }}</td>
+                  <td class="barcell"><span class="bar" [style.width.%]="f.psi / 0.5 * 100" [style.background]="heat(f.psi)"></span></td>
+                  <td>{{ f.ks_stat === null ? '–' : (f.ks_stat | number: '1.3-3') }}</td>
+                  <td>{{ f.ks_p === null ? '–' : (f.ks_p | number: '1.1-4') }}</td>
+                  <td><span class="sev sev-{{ f.severity }}">{{ f.severity }}</span></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
 
-  @if (result(); as r) {
-    <section class="result" [class.fraud]="r.prediction === 'Fraud'">
-      <h2>Prediction result</h2>
-      <p class="verdict"><strong>{{ r.prediction }}</strong> <small>({{ r.model }})</small></p>
-      <p>Fraud probability: {{ percent(r.fraud_probability) }}
-        (flag threshold {{ percent(r.threshold) }}, tuned for ≈5% false-positive rate)</p>
-      <p>{{ r.disclaimer }}</p>
+      @if (thresholdSeries(); as path) {
+        <h3>Threshold over streamed batches</h3>
+        <svg viewBox="0 0 560 140" class="chart" role="img" aria-label="threshold timeline">
+          <path [attr.d]="path" fill="none" stroke="#2a6fdb" stroke-width="2.5" />
+        </svg>
+        <table class="data">
+          <thead><tr><th>#</th><th>Month</th><th>Drift</th><th>Max PSI</th><th>Threshold</th><th>FPR before → after</th><th>Decisions A/R/F</th></tr></thead>
+          <tbody>
+            @for (e of driftLog(); track e.batch) {
+              <tr><td>{{ e.batch }}</td><td>{{ e.month }}</td><td>{{ e.drift_detected ? 'yes' : 'no' }}</td>
+                <td>{{ e.max_psi | number: '1.3-3' }}</td>
+                <td>{{ percent(e.threshold_before) }} → {{ percent(e.threshold_after) }}</td>
+                <td>{{ percent(e.performance_before?.fpr) }} → {{ percent(e.performance_after?.fpr) }}</td>
+                <td>{{ e.decisions.APPROVE }}/{{ e.decisions.MANUAL_REVIEW }}/{{ e.decisions.FLAG_FRAUD }}</td></tr>
+            }
+          </tbody>
+        </table>
+      }
     </section>
   }
+
+  <!-- ============================================================ RESEARCH -->
+  @if (tab() === 'research') {
+    @if (summary(); as s) {
+      <section class="panel">
+        <h2>Novelty 1 — drift-aware threshold adaptation</h2>
+        <p class="muted">{{ s.drift.setup.model }} trained on months 0–1, threshold fixed on month 2,
+          months 3–7 streamed as {{ s.drift.setup.batches_per_month }} micro-batches per month with
+          labels delayed by one batch.</p>
+        <table class="data">
+          <thead><tr><th>Policy</th><th>Mean |FPR − 5%|</th><th>Batches within ±1 pp</th><th>Max FPR</th>
+            <th>Mean recall</th><th>Predictive equality (age)</th><th>Recalibrations</th></tr></thead>
+          <tbody>
+            @for (k of policyNames; track k) {
+              @if (s.drift.policies[k]; as p) {
+                <tr><td><span class="sw" [style.background]="policyColors[k]"></span>{{ policyLabels[k] }}</td>
+                  <td>{{ percent(p.mean_abs_fpr_dev) }}</td><td>{{ p.batches_within_tolerance | percent }}</td>
+                  <td>{{ percent(p.max_fpr) }}</td><td>{{ percent(p.mean_recall, 1) }}</td>
+                  <td>{{ p.mean_pe_age | number: '1.3-3' }}</td><td>{{ p.recalibrations }}</td></tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        <div class="charts">
+          <figure>
+            <figcaption>Realised FPR per micro-batch (dashed = 5% target)</figcaption>
+            <svg viewBox="0 0 420 180" class="chart">
+              <line x1="0" x2="420" [attr.y1]="y(0.05, 180, 0.02, 0.1)" [attr.y2]="y(0.05, 180, 0.02, 0.1)" class="target" />
+              @for (k of policyNames; track k) {
+                @if (s.drift.policies[k]; as p) {
+                  <path [attr.d]="linePath(p.fpr, 420, 180, 0.02, 0.1)" fill="none" [attr.stroke]="policyColors[k]" stroke-width="2" />
+                }
+              }
+            </svg>
+          </figure>
+          <figure>
+            <figcaption>Predictive equality across age groups (1 = equal FPR)</figcaption>
+            <svg viewBox="0 0 420 180" class="chart">
+              @for (k of policyNames; track k) {
+                @if (s.drift.policies[k]; as p) {
+                  <path [attr.d]="linePath(p.pe_age, 420, 180, 0, 1)" fill="none" [attr.stroke]="policyColors[k]" stroke-width="2" />
+                }
+              }
+            </svg>
+          </figure>
+        </div>
+
+        <h3>Deployed Random Forest, month 6 → month 7 stream</h3>
+        <table class="data">
+          <thead><tr><th>Policy</th><th>Mean |FPR − 5%|</th><th>Mean FPR</th><th>Mean recall</th><th>PE (age)</th></tr></thead>
+          <tbody>
+            @for (k of keys(s.drift_rf.policies); track k) {
+              @if (s.drift_rf.policies[k]; as p) {
+                <tr><td>{{ policyLabels[k] }}</td><td>{{ percent(p.mean_abs_fpr_dev) }}</td><td>{{ percent(p.mean_fpr) }}</td>
+                  <td>{{ percent(p.mean_recall, 1) }}</td><td>{{ p.mean_pe_age | number: '1.3-3' }}</td></tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        <h3>Population Stability Index vs. reference month 2</h3>
+        <div class="heat">
+          <table class="data">
+            <thead><tr><th>Feature</th>@for (m of s.drift.psi.months; track m) { <th>M{{ m }}</th> }</tr></thead>
+            <tbody>
+              @for (f of s.drift.psi.features; track f; let fi = $index) {
+                <tr><td>{{ f }}</td>
+                  @for (m of s.drift.psi.months; track m; let mi = $index) {
+                    <td [style.background]="heat(s.drift.psi.values[mi][fi])">{{ s.drift.psi.values[mi][fi] | number: '1.2-2' }}</td>
+                  }
+                </tr>
+              }
+              <tr><td><strong>model score</strong></td>
+                @for (v of s.drift.psi.score_psi; track $index) { <td [style.background]="heat(v)">{{ v | number: '1.2-2' }}</td> }</tr>
+              <tr><td>ROC-AUC</td>@for (v of s.drift.psi.auc; track $index) { <td>{{ v | number: '1.3-3' }}</td> }</tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Novelty 2 — uncertainty-aware three-way decisions</h2>
+        <p class="muted">Policies calibrated on month 6, evaluated on the untouched month 7. The binary
+          baseline auto-decides every case at the 5%-FPR threshold; the three-way policy refers the grey
+          zone and high-epistemic-uncertainty cases to a human reviewer.</p>
+        <table class="data">
+          <thead><tr><th>Model</th><th>AUC</th><th>Automated errors<br>binary → 3-way</th><th>Error reduction</th>
+            <th>Auto error rate</th><th>Auto FPR</th><th>Review rate</th><th>Recall (auto + review)</th></tr></thead>
+          <tbody>
+            @for (k of keys(s.uncertainty); track k) {
+              @if (s.uncertainty[k]; as u) {
+                <tr><td><span class="sw" [style.background]="modelColors[k]"></span>{{ modelLabels[k] }}</td>
+                  <td>{{ u.auc | number: '1.3-3' }}</td>
+                  <td>{{ u.binary.auto_errors }} → {{ u.three_way.auto_errors }}</td>
+                  <td><strong>{{ errorReduction(u) | percent: '1.0-1' }}</strong></td>
+                  <td>{{ percent(u.binary.auto_error_rate) }} → {{ percent(u.three_way.auto_error_rate) }}</td>
+                  <td>{{ percent(u.binary.auto_fpr) }} → {{ percent(u.three_way.auto_fpr) }}</td>
+                  <td>{{ percent(u.three_way.review_rate) }}</td>
+                  <td>{{ percent(u.binary.auto_recall, 1) }} → {{ percent(u.three_way.recall_with_review, 1) }}</td></tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        <div class="charts">
+          <figure>
+            <figcaption>Automated error rate vs. share sent to review (0–12% budget)</figcaption>
+            <svg viewBox="0 0 420 180" class="chart">
+              @for (k of keys(s.uncertainty); track k) {
+                <path [attr.d]="sweepPath(s.uncertainty[k].budget_sweep, 420, 180, 0.2, 0.09)" fill="none"
+                      [attr.stroke]="modelColors[k]" stroke-width="2" />
+              }
+            </svg>
+          </figure>
+          <figure>
+            <figcaption>Binary error rate by epistemic-uncertainty decile (1 = most certain)</figcaption>
+            <svg viewBox="0 0 420 180" class="chart">
+              @for (k of keys(s.uncertainty); track k) {
+                <path [attr.d]="linePath(s.uncertainty[k].error_by_uncertainty_decile, 420, 180, 0, 0.3)" fill="none"
+                      [attr.stroke]="modelColors[k]" stroke-width="2" />
+              }
+            </svg>
+          </figure>
+        </div>
+        <p class="legend">@for (k of keys(s.uncertainty); track k) { <span class="sw" [style.background]="modelColors[k]"></span>{{ modelLabels[k] }} }</p>
+
+        <h3>Both novelties together (month 7 stream)</h3>
+        <table class="data">
+          <thead><tr><th>Model</th><th>Threshold</th><th>Auto FPR</th><th>Auto error rate</th><th>Review rate</th><th>Recall (auto + review)</th></tr></thead>
+          <tbody>
+            @for (k of keys(s.combined); track k) {
+              @for (mode of keys(s.combined[k]); track mode) {
+                <tr><td>{{ modelLabels[k] }}</td><td>{{ mode === 'drift' ? 'drift-aware' : 'static' }}</td>
+                  <td [class.warn]="s.combined[k][mode].auto_fpr > 0.05">{{ percent(s.combined[k][mode].auto_fpr) }}</td>
+                  <td>{{ percent(s.combined[k][mode].auto_error_rate) }}</td>
+                  <td>{{ percent(s.combined[k][mode].review_rate) }}</td>
+                  <td>{{ percent(s.combined[k][mode].recall_with_review, 1) }}</td></tr>
+              }
+            }
+          </tbody>
+        </table>
+      </section>
+    } @else {
+      <p class="muted">Loading experiment summary… (generated by backend/experiments/run_experiments.py)</p>
+    }
+  }
 </main>
-
-
-

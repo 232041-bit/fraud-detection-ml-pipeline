@@ -1,0 +1,72 @@
+{
+  "policies": {
+    "random_forest": {
+      "t_fraud": 0.3390764753470697,
+      "t_low": 0.26294895520986594,
+      "u_max": 0.7497525206225173,
+      "uncertainty_key": "mutual_information",
+      "band_budget": 0.03,
+      "epistemic_budget": 0.02,
+      "target_fpr": 0.05
+    },
+    "deep_ensemble": {
+      "t_fraud": 0.3902556332292581,
+      "t_low": 0.2918321495584872,
+      "u_max": 0.06170421321115722,
+      "uncertainty_key": "mutual_information",
+      "band_budget": 0.03,
+      "epistemic_budget": 0.02,
+      "target_fpr": 0.05
+    },
+    "mc_dropout": {
+      "t_fraud": 0.340791028487989,
+      "t_low": 0.25992362887141157,
+      "u_max": 0.03223786135388239,
+      "uncertainty_key": "mutual_information",
+      "band_budget": 0.03,
+      "epistemic_budget": 0.02,
+      "target_fpr": 0.05
+    },
+    "logistic_regression": {
+      "t_fraud": 0.9994876112515068,
+      "t_low": 0.9969964103271962,
+      "u_max": Infinity,
+      "uncertainty_key": "mutual_information",
+      "band_budget": 0.03,
+      "epistemic_budget": 0.0,
+      "target_fpr": 0.05
+    }
+  },
+  "thresholds": {
+    "random_forest": 0.3390764753470697,
+    "deep_ensemble": 0.3902556332292581,
+    "mc_dropout": 0.340791028487989,
+    "logistic_regression": 0.9994876112515068
+  },
+  "group_thresholds": {
+    "random_forest": {
+      "0": 0.2966422008166628,
+      "1": 0.46742350517222814
+    },
+    "deep_ensemble": {
+      "0": 0.3264985513534837,
+      "1": 0.5549491324471171
+    },
+    "mc_dropout": {
+      "0": 0.28633875217301086,
+      "1": 0.4821125171124593
+    },
+    "logistic_regression": {
+      "0": 0.9987600793143389,
+      "1": 0.9999595256003626
+    }
+  },
+  "protocol": {
+    "train_months": [
+      0,
+      5
+    ],
+    "calibration_month": 6,
+    "test_month": 7
+  }
+}

@@ -110,3 +110,17 @@ export const SAMPLE_FRAUD: Record<string, string | number> = {
   "device_fraud_count": 0,
   "month": 6
 };
+
+// Real month-6 BAF row that the Random Forest sends to MANUAL_REVIEW (grey zone, Novelty 2).
+export const SAMPLE_REVIEW: Record<string, string | number> = {
+  "income": 0.4, "name_email_similarity": 0.152430708, "prev_address_months_count": -1,
+  "current_address_months_count": 83, "customer_age": 30, "days_since_request": 0.020927291,
+  "intended_balcon_amount": -0.836685812, "payment_type": "AB", "zip_count_4w": 362,
+  "velocity_6h": 548.0492785, "velocity_24h": 2699.713756, "velocity_4w": 4314.063117,
+  "bank_branch_count_8w": 1398, "date_of_birth_distinct_emails_4w": 7, "employment_status": "CA",
+  "credit_risk_score": 187, "email_is_free": 0, "housing_status": "BB", "phone_home_valid": 0,
+  "phone_mobile_valid": 1, "bank_months_count": 30, "has_other_cards": 0,
+  "proposed_credit_limit": 200, "foreign_request": 0, "source": "INTERNET",
+  "session_length_in_minutes": 7.147666294, "device_os": "windows", "keep_alive_session": 0,
+  "device_distinct_emails_8w": 1, "device_fraud_count": 0, "month": 6
+};

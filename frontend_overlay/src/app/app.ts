@@ -9,10 +9,10 @@ import {
 type Tab = 'predict' | 'drift' | 'research';
 
 const POLICY_COLORS: Record<string, string> = {
-  static: '#8a94a6', drift: '#2a6fdb', drift_fair: '#16a37f', always: '#e07b24',
+  static: '#94a3b8', drift: '#6c8cff', drift_fair: '#34d399', always: '#fb923c',
 };
 const MODEL_COLORS: Record<string, string> = {
-  random_forest: '#2a6fdb', deep_ensemble: '#16a37f', mc_dropout: '#c2410c',
+  random_forest: '#6c8cff', deep_ensemble: '#34d399', mc_dropout: '#f472b6',
 };
 
 @Component({
@@ -228,8 +228,8 @@ export class App {
   heat(v: number): string {
     // PSI colour scale: stable (<0.1) -> moderate -> major (>=0.25)
     const t = Math.min(1, v / 0.5);
-    const hue = 140 - 140 * t;
-    return `hsl(${hue}, 65%, ${88 - 38 * t}%)`;
+    const hue = 150 - 150 * t;
+    return `hsla(${hue}, 85%, 50%, ${(0.18 + 0.62 * t).toFixed(2)})`;
   }
 
   maxOf(arr: number[]): number { return Math.max(...arr); }
